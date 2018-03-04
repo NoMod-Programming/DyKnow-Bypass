@@ -1,42 +1,66 @@
 import ctypes
-from io import StringIO
 import time
+import os
 helperDll = ctypes.CDLL("DyKnowSupport.dll")
 
 def killProcess(executable):
     # 'executable' must be bytes
-    helperDll.killProcessByName(ctypes.create_string_buffer(executable))
+    return helperDll.killProcessByName(ctypes.create_string_buffer(executable))
+
+def allProcesses():
+    allProcesses = ((ctypes.c_char * 255) * 255)()
+    helperDll.getProcesses(allProcesses)
+    yield from (x.value for x in allProcesses if x.value)
+
+def getDyKnowExes():
+    allExes = set()
+    for folderName, folders, files in os.walk(r"C:\Program Files\DyKnow\Cloud"):
+        allExes.update(x.encode("utf-8") for x in files if x.endswith(".exe"))
+    return allExes
+
+#def getLANDeskExes():
+#    allExes = set()
+#    for folderName, folders, files in os.walk(r"C:\Program Files (x86)\LANDesk\LDClient"):
+#        allExes.update(x.encode("utf-8") for x in files if x.endswith(".exe"))
+#    return allExes
+
+#def getSophosExes():
+#    allExes = set()
+#    for folderName, folders, files in os.walk(r"C:\Program Files (x86)\Sophos"):
+#        allExes.update(x.encode("utf-8") for x in files if x.endswith(".exe"))
+#    return allExes
+
+protectedProcesses = []
+
+customBlacklist = [
+#    b'ALMon.exe', # Sophos Endpoint Security and Control
+#    b'proxyhost.exe', # Seems suspicious
+#    b'LDISCN32.EXE', #Inventory scan
+#    b'RouterNT.exe', #
+#    b'MSASCuiL.exe', # Windows Defender notification icon
+#    b'TabTip32.exe', # Touch Keyboard and Handwriting Panel Helper
+#    b'TabTip.exe', # Touch Keyboard and Handwriting Panel
+#    b'tposd.exe', # On screen display drawer
+#    #b'LPlatSvc.exe', # Lenovo Platform Service
+    ]
 
 if __name__ == '__main__':
-    #with StringIO() as buffer, redirect_stdout(buffer):
-    #    killProcess(b"pleasedontmakethisanactualexeoritwillbekilled.exe")
-    #    print(buffer.getvalue())
-    #test = ((ctypes.c_char * 255) * 255)()
-    #helperDll.getProcesses(test)
-    #print([x.value for x in test])
-
-    # Todo: Detect that annoying DyKnow spyware and auto-block it. Probably just a simple regex for anything that
-    # *isn't* going to be at startup, but I'd need to check for stuff like python or other stuff that might
-    # be needed at some point
-    
+    print("Starting main loop!")
     while True:
-        for exec in [
-            b'SearchUI.exe',
-            b'smartscreen.exe',
-            b'ETDCtrlHelper.exe',
-            b'ISD_Tablet.exe',
-            b'TabTip.exe',
-            b'ctfmon.exe',
-            #b'tposd.exe',
-            b'EDTTouch.exe',
-            b'EDTIntelligent.exe',
-            b'MSASCuiL.exe',
-            #b'winlogon.exe',
-            b'LPlatSvc.exe',
-            ## b'TpShocks.exe',
-            b'TabTip32.exe',
-            b'ALMon.exe'
-        ]:
-            killProcess(exec)
+        processes = list(allProcesses())
+        #new.update(x for x in lastProcesses if x not in curr) # Get killed processes
+        blacklisted = getDyKnowExes()
+        blacklisted.update(getLANDeskExes())
+        blacklisted.update(getSophosExes())
+        blacklisted.update(customBlacklist)
+        for proc in blacklisted:
+            # Kill processes
+            if proc in processes and proc not in protectedProcesses:
+                res = killProcess(proc)
+                if res == 0:
+                    print("Killed {}!".format(proc))
+                else:
+                    # Error killing process? Must be a permissions issue; log it
+                    print("Error killing process \"{}\". {}".format(proc, ctypes.WinError(res) ))
+                    protectedProcesses.append(proc)
         time.sleep(0.05)
-        print("Killed!")

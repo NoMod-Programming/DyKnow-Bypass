@@ -6,7 +6,7 @@
 #include <stdio.h>
 int killProcessByName(char* filename)
 {
-    int ret = 0;
+    int ret = 1;
     HANDLE hSnapShot = CreateToolhelp32Snapshot(TH32CS_SNAPALL, 0);
     PROCESSENTRY32 pEntry;
     pEntry.dwSize = sizeof (pEntry);
@@ -22,7 +22,9 @@ int killProcessByName(char* filename)
             {
                 TerminateProcess(hProcess, 9);
                 CloseHandle(hProcess);
-                ret = 1;
+                ret = 0;
+            } else {
+                return GetLastError();
             }
         }
         hRes = Process32Next(hSnapShot, &pEntry);
