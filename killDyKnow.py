@@ -50,8 +50,8 @@ if __name__ == '__main__':
         processes = list(allProcesses())
         #new.update(x for x in lastProcesses if x not in curr) # Get killed processes
         blacklisted = getDyKnowExes()
-        blacklisted.update(getLANDeskExes())
-        blacklisted.update(getSophosExes())
+        #blacklisted.update(getLANDeskExes())
+        #blacklisted.update(getSophosExes())
         blacklisted.update(customBlacklist)
         for proc in blacklisted:
             # Kill processes
