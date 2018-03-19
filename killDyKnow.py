@@ -14,7 +14,7 @@ def allProcesses():
 
 def getDyKnowExes():
     allExes = set()
-    for folderName, folders, files in os.walk(r"C:\Program Files\DyKnow\Cloud"):
+    for folderName, folders, files in os.walk(r"C:\Program Files\DyKnow"):
         allExes.update(x.encode("utf-8") for x in files if x.endswith(".exe"))
     return allExes
 
