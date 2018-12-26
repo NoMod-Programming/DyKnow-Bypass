@@ -1,4 +1,4 @@
-# DyKnow-Bypass
+# DyKnow-Bypass (proof of concept, totally untested, says I)
 
 ## Java version:
 
